@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Result analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#EEF1F7;--panel:#FFFFFF;--ink:#14213D;--mut:#5B6785;--line:#D9DFEC;--me:#E5254F;--cls:#8896B3;--ahead:#3B4CCA;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1526;--panel:#17203A;--ink:#E8ECF6;--mut:#98A3C0;--line:#27325A;--me:#FF6B8B;--cls:#6F7FA3;--ahead:#8E9BFF}}
+:root[data-theme="dark"]{--bg:#0E1526;--panel:#17203A;--ink:#E8ECF6;--mut:#98A3C0;--line:#27325A;--me:#FF6B8B;--cls:#6F7FA3;--ahead:#8E9BFF}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:28px 18px 70px}
+h1{font-size:20px;font-weight:800;margin:0 0 4px;letter-spacing:-.01em}
+.sub{margin:0 0 22px;color:var(--mut);max-width:60ch}
+.setup{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch}
+.drop{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:18px;border:2px dashed var(--line);border-radius:14px;cursor:pointer;background:var(--panel);transition:border-color .2s}
+.drop:hover,.drop.on{border-color:var(--me)}
+.drop strong{font-weight:600}.drop span{color:var(--mut);font-size:14px}
+.ask{display:flex;gap:8px;align-items:stretch}
+input[type=text]{flex:1;min-width:0;font:inherit;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink)}
+button{font:inherit;font-weight:600;cursor:pointer;border:0;border-radius:12px;padding:12px 20px;background:var(--ink);color:var(--bg)}
+button.link{background:none;color:var(--ahead);padding:0;text-decoration:underline;font-weight:400}
+:focus-visible{outline:3px solid var(--ahead);outline-offset:2px}
+.hint{grid-column:1/-1;margin:0;color:var(--mut);font-size:14px}
+.msg{grid-column:1/-1;margin:0;min-height:1.4em;color:var(--me);font-weight:600}
+.hl{font-size:clamp(28px,5vw,48px);line-height:1.08;font-weight:800;letter-spacing:-.03em;margin:46px 0 12px;max-width:22em}
+.lede{color:var(--mut);margin:0 0 30px;font-size:18px}
+.band{display:grid;grid-template-columns:minmax(0,260px) 1fr;gap:26px;padding:26px 0;border-top:1px solid var(--line)}
+.band h2,.sec h2{font-size:15px;font-weight:600;color:var(--mut);margin:0 0 2px}
+.big{font-size:56px;font-weight:800;line-height:1;margin:0 0 12px;letter-spacing:-.03em}
+.facts{margin:0;padding-left:18px;color:var(--mut)}.facts b{color:var(--ink)}
+.chart svg,.map svg{width:100%;height:auto;display:block}
+.sec{padding:26px 0;border-top:1px solid var(--line)}
+.sec p.n{margin:4px 0 14px;color:var(--mut);max-width:62ch}
+.map{background:var(--panel);border-radius:16px;padding:12px;border:1px solid var(--line)}
+.key{display:flex;gap:18px;flex-wrap:wrap;margin:12px 2px 0;font-size:14px;color:var(--mut)}
+.key i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:30px}
+ol.lad{list-style:none;margin:8px 0 0;padding:0}
+ol.lad li{display:grid;grid-template-columns:28px 1fr 70px 44px;gap:8px;align-items:center;padding:7px 8px;border-radius:10px;font-size:15px}
+ol.lad li.me{background:var(--panel);outline:2px solid var(--me);font-weight:600}
+.rk{color:var(--mut)}.vl{text-align:right;font-variant-numeric:tabular-nums}
+.nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:var(--cls)}
+.me .bar i{background:var(--me)}
+details{margin-top:10px;color:var(--mut)}summary{cursor:pointer;font-weight:600;color:var(--ink)}
+details ul{list-style:none;margin:8px 0 0;padding:0;max-height:260px;overflow:auto}
+details li{display:flex;justify-content:space-between;gap:10px;padding:5px 2px;border-bottom:1px solid var(--line);font-size:15px}
+svg text{font-family:inherit;fill:var(--mut);font-size:10px}
+svg .you{fill:var(--me);font-weight:800;font-size:11px}
+.bar-r{fill:var(--cls);opacity:.55;transform-box:fill-box;transform-origin:bottom;animation:grow .7s cubic-bezier(.2,.8,.2,1) both}
+.bar-r.me{fill:var(--me);opacity:1}
+@keyframes grow{from{transform:scaleY(0)}}
+.quad{fill:var(--ahead);opacity:.1}
+.srow{display:grid;grid-template-columns:minmax(0,190px) 1fr minmax(0,230px);gap:18px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.srow:last-of-type{border-bottom:0}
+.sn{font-weight:600}
+.chip{display:inline-block;min-width:34px;text-align:center;padding:2px 10px;border-radius:999px;background:var(--me);color:var(--bg);font-weight:800;margin-top:4px}
+.seg{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--line);margin-bottom:6px}
+.seg i{display:block;height:100%;min-width:0}
+.stx{font-size:14px;color:var(--mut)}.stx b{color:var(--ink)}
+@media (max-width:720px){.setup,.two,.band,.srow{grid-template-columns:1fr}.band{gap:14px}.srow{gap:10px}}
+@media (prefers-reduced-motion:reduce){.bar-r{animation:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Result analyzer</h1>
+  <p class="sub">Add the class Excel sheet and your roll number to see how your SPI and CPI compare with everyone else’s. The sheet is read inside your browser and is never uploaded.</p>
+  <section class="setup">
+    <label class="drop" id="drop" tabindex="0">
+      <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden>
+      <strong id="dropT">Choose the Excel sheet</strong>
+      <span id="dropS">or drag it onto this box</span>
+    </label>
+    <div class="ask">
+      <input type="text" id="roll" inputmode="numeric" placeholder="Your roll number" autocomplete="off" aria-label="Your roll number">
+      <button id="go">Analyze</button>
+    </div>
+    <p class="hint">No sheet handy? <button class="link" id="demo" type="button">Try it with demo data</button></p>
+    <p class="msg" id="msg" role="alert"></p>
+  </section>
+  <div id="out"></div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm=k=>String(k).toLowerCase().replace(/[^a-z]/g,"");
+let rows=[],subjects=[];
+const DEMO_SUBS=["Physics II","Mathematics II","Data Structure","Computer Programming","Environment and Ecology"];
+
+function say(t){$("#msg").textContent=t}
+function loaded(list,label,subs){rows=list;subjects=subs||[];$("#dropT").textContent=label;$("#dropS").textContent=list.length+" students loaded";say("")}
+
+function readFile(file){
+  const r=new FileReader();
+  r.onerror=()=>say("Couldn’t read that file. Save it as .xlsx and try again.");
+  r.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:"array"});
+      const js=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""});
+      if(!js.length)return say("That sheet is empty.");
+      const keys=Object.keys(js[0]),pick=n=>keys.find(k=>norm(k)===n);
+      const kn=pick("name"),kr=pick("rollno"),ks=pick("spi"),kc=pick("cpi");
+      if(!kr||!ks||!kc)return say("Couldn’t find the Roll No, SPI and CPI columns. Use the sheet made by the results script.");
+      const subs=keys.filter(k=>![kn,kr,ks,kc].includes(k)&&String(k).trim());
+      const list=js.map(x=>({name:String(kn?x[kn]:"").trim(),roll:String(x[kr]).trim(),spi:parseFloat(x[ks]),cpi:parseFloat(x[kc]),g:Object.fromEntries(subs.map(k=>[k,String(x[k]).trim()]))}))
+        .filter(x=>x.roll&&!isNaN(x.spi)&&!isNaN(x.cpi));
+      if(!list.length)return say("No students with both SPI and CPI were found in that sheet.");
+      loaded(list,file.name,subs);
+    }catch(err){say("That file doesn’t look like an Excel sheet.")}
+  };
+  r.readAsArrayBuffer(file);
+}
+
+function demo(){
+  const g=()=>(Math.random()+Math.random()+Math.random()-1.5)/.75;
+  const cl=v=>Math.min(9.95,Math.max(5,Math.round(v*100)/100));
+  const list=Array.from({length:60},(_,i)=>{const b=7.4+g()*.9;
+    return{name:"Student "+String(i+1).padStart(2,"0"),roll:String(25116101+i),spi:cl(b+g()*.45),cpi:cl(b+g()*.25),g:Object.fromEntries(DEMO_SUBS.map(s=>[s,["C","B","A","O"][Math.max(0,Math.min(3,Math.round((b+g()*.6-5.6)*1.2+g()*.3)))]]))}});
+  loaded(list,"Demo data",DEMO_SUBS);$("#roll").value="25116107";
+}
+
+const rankOf=(key,r)=>1+rows.filter(x=>x[key]>r[key]).length;
+function stat(key,me){
+  const N=rows.length,higher=rows.filter(r=>r[key]>me[key]).sort((a,b)=>b[key]-a[key]);
+  const lower=rows.filter(r=>r[key]<me[key]).length;
+  return{key,val:me[key],higher,same:rows.filter(r=>r!==me&&r[key]===me[key]).length,rank:higher.length+1,
+    beat:N>1?Math.round(lower/(N-1)*100):100,avg:rows.reduce((a,r)=>a+r[key],0)/N,top:Math.max(...rows.map(r=>r[key]))};
+}
+
+function hist(key,me){
+  const v=rows.map(r=>r[key]),lo=Math.floor(Math.min(...v)*2)/2,hi=Math.max(Math.ceil(Math.max(...v)*2)/2,lo+.5);
+  const nb=Math.round((hi-lo)/.5),bins=Array(nb).fill(0);
+  v.forEach(x=>bins[Math.min(nb-1,Math.floor((x-lo)/.5))]++);
+  const mx=Math.max(...bins),W=420,H=200,pb=24,top=34,bw=W/nb,mi=Math.min(nb-1,Math.floor((me[key]-lo)/.5));
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${key.toUpperCase()} distribution of the class">`;
+  bins.forEach((c,i)=>{
+    const h=(H-pb-top)*c/mx,x=i*bw+3,y=H-pb-h,cx=x+(bw-6)/2;
+    s+=`<rect class="bar-r${i===mi?" me":""}" x="${x}" y="${y}" width="${bw-6}" height="${h}" rx="4" style="animation-delay:${i*45}ms"/>`;
+    if(c)s+=`<text x="${cx}" y="${y-5}" text-anchor="middle">${c}</text>`;
+    if(i===mi)s+=`<text class="you" x="${cx}" y="${Math.max(11,y-19)}" text-anchor="middle">You</text>`;
+    s+=`<text x="${cx}" y="${H-7}" text-anchor="middle">${(lo+i*.5).toFixed(1)}</text>`;
+  });
+  return s+"</svg>";
+}
+
+function scatter(me){
+  const W=460,H=372,p={l:42,r:14,t:30,b:36},pad=.15;
+  const xs=rows.map(r=>r.spi),ys=rows.map(r=>r.cpi);
+  const x0=Math.min(...xs)-pad,x1=Math.max(...xs)+pad,y0=Math.min(...ys)-pad,y1=Math.max(...ys)+pad;
+  const X=v=>p.l+(v-x0)/(x1-x0)*(W-p.l-p.r),Y=v=>H-p.b-(v-y0)/(y1-y0)*(H-p.t-p.b);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="SPI against CPI for the whole class">`;
+  s+=`<rect class="quad" x="${X(me.spi)}" y="${p.t}" width="${W-p.r-X(me.spi)}" height="${Y(me.cpi)-p.t}"/>`;
+  for(let i=0;i<=4;i++){
+    const xv=x0+(x1-x0)*i/4,yv=y0+(y1-y0)*i/4;
+    s+=`<text x="${X(xv)}" y="${H-14}" text-anchor="middle">${xv.toFixed(1)}</text><text x="${p.l-8}" y="${Y(yv)+3}" text-anchor="end">${yv.toFixed(1)}</text>`;
+  }
+  s+=`<text x="${(W+p.l)/2}" y="${H-1}" text-anchor="middle">SPI</text><text x="${p.l-8}" y="13" text-anchor="end">CPI</text>`;
+  s+=`<line x1="${X(me.spi)}" x2="${X(me.spi)}" y1="${p.t}" y2="${H-p.b}" stroke="var(--me)" stroke-dasharray="4 4" opacity=".6"/>`;
+  s+=`<line x1="${p.l}" x2="${W-p.r}" y1="${Y(me.cpi)}" y2="${Y(me.cpi)}" stroke="var(--me)" stroke-dasharray="4 4" opacity=".6"/>`;
+  rows.forEach(r=>{if(r===me)return;const a=r.spi>me.spi&&r.cpi>me.cpi;
+    s+=`<circle cx="${X(r.spi)}" cy="${Y(r.cpi)}" r="${a?4.5:3.5}" fill="${a?"var(--ahead)":"var(--cls)"}" opacity="${a?.9:.5}"><title>${esc(r.name||r.roll)}: SPI ${r.spi.toFixed(2)}, CPI ${r.cpi.toFixed(2)}</title></circle>`});
+  s+=`<circle cx="${X(me.spi)}" cy="${Y(me.cpi)}" r="8" fill="var(--me)" stroke="var(--bg)" stroke-width="3"/>`;
+  const right=X(me.spi)>W*.7;
+  s+=`<text class="you" x="${X(me.spi)+(right?-13:13)}" y="${Y(me.cpi)-10}" text-anchor="${right?"end":"start"}">You</text>`;
+  return s+"</svg>";
+}
+
+function ladder(key,me){
+  const s=[...rows].sort((a,b)=>b[key]-a[key]),i=s.indexOf(me);
+  return s.slice(Math.max(0,i-3),i+4).map(r=>`<li class="${r===me?"me":""}"><span class="rk">${rankOf(key,r)}</span><span class="nm">${esc(r.name||r.roll)}${r===me?" (you)":""}</span><span class="bar"><i style="width:${Math.min(100,r[key]*10)}%"></i></span><span class="vl">${r[key].toFixed(2)}</span></li>`).join("");
+}
+function ahead(st){
+  if(!st.higher.length)return `<details open><summary>Nobody is ahead of you</summary></details>`;
+  return `<details><summary>Everyone ahead of you (${st.higher.length})</summary><ul>${st.higher.map(r=>`<li><span>${esc(r.name||r.roll)}</span><span>${r[st.key].toFixed(2)} (+${(r[st.key]-st.val).toFixed(2)})</span></li>`).join("")}</ul></details>`;
+}
+function band(st){
+  const L=st.key.toUpperCase();
+  return `<section class="band"><div><h2>Your ${L}</h2><p class="big">${st.val.toFixed(2)}</p><ul class="facts">
+    <li>Rank <b>${st.rank}</b> of ${rows.length}${st.same?`, tied with ${st.same}`:""}</li>
+    <li>Ahead of <b>${st.beat}%</b> of the class</li>
+    <li>Class average <b>${st.avg.toFixed(2)}</b>, highest <b>${st.top.toFixed(2)}</b></li></ul></div>
+    <div class="chart">${hist(st.key,rows.find(r=>r.roll===$("#roll").value.trim()))}</div></section>`;
+}
+
+const ORDER=["O","A+","A","B+","B","C","D","P","F"];
+const gv=g=>{const i=ORDER.indexOf(String(g).trim().toUpperCase());return i<0?null:ORDER.length-i};
+const subName=k=>String(k).replace(/\s*\([^)]*\)\s*$/,"");
+
+function subjectStats(me){
+  return subjects.map(k=>{
+    const mine=gv(me.g[k]);
+    if(mine===null)return null;
+    const all=rows.map(r=>gv(r.g[k])).filter(v=>v!==null),dist={};
+    rows.forEach(r=>{const x=String(r.g[k]||"").trim().toUpperCase();if(gv(x)!==null)dist[x]=(dist[x]||0)+1});
+    const better=all.filter(v=>v>mine).length;
+    return{k,name:subName(k),grade:String(me.g[k]).trim().toUpperCase(),better,same:all.filter(v=>v===mine).length-1,lower:all.filter(v=>v<mine).length,n:all.length,pct:better/all.length,dist};
+  }).filter(Boolean);
+}
+function gmini(s){
+  const gs=ORDER.filter(g=>s.dist[g]),mx=Math.max(...gs.map(g=>s.dist[g])),W=gs.length*30,H=64;
+  return `<svg viewBox="0 0 ${W} ${H}" style="max-width:${W*1.6}px" role="img" aria-label="Grades in ${esc(s.name)}">`+gs.map((g,i)=>{
+    const h=38*s.dist[g]/mx,x=i*30+4,m=g===s.grade;
+    return `<rect class="bar-r${m?" me":""}" x="${x}" y="${50-h}" width="22" height="${h}" rx="3"/><text x="${x+11}" y="${46-h}" text-anchor="middle">${s.dist[g]}</text><text${m?' class="you"':""} x="${x+11}" y="${H-2}" text-anchor="middle">${esc(g)}</text>`}).join("")+"</svg>";
+}
+function subjectSection(me){
+  const st=subjectStats(me);
+  if(!st.length)return "";
+  const sorted=[...st].sort((a,b)=>a.pct-b.pct||a.name.localeCompare(b.name)),best=sorted[0],weak=sorted[sorted.length-1];
+  const lead=best.pct===weak.pct?"You’re level with the class across your subjects.":`Against the class, ${esc(best.name)} is your strongest subject and ${esc(weak.name)} your weakest.`;
+  return `<section class="sec"><h2>Subject by subject</h2><p class="n">${lead} Subjects are listed from your strongest to your weakest, and each bar shows how the whole class compares with your grade.</p>
+    ${sorted.map(s=>`<div class="srow"><div><div class="sn">${esc(s.name)}</div><span class="chip">${esc(s.grade)}</span></div>
+      <div><div class="seg" role="img" aria-label="${s.better} did better, ${s.same} tied, ${s.lower} did worse"><i style="flex:${s.better};background:var(--ahead)"></i><i style="flex:${s.same+1};background:var(--me)"></i><i style="flex:${s.lower};background:var(--line)"></i></div>
+      <div class="stx"><b>${s.better}</b> did better, <b>${s.same}</b> tied with you, <b>${s.lower}</b> had a lower grade</div></div>
+      <div>${gmini(s)}</div></div>`).join("")}
+    <div class="key"><span><i style="background:var(--ahead)"></i>Better than you</span><span><i style="background:var(--me)"></i>You and anyone tied</span><span><i style="background:var(--line)"></i>Below you</span></div></section>`;
+}
+
+function run(){
+  if(!rows.length)return say("Choose the Excel sheet first, or try the demo data.");
+  const roll=$("#roll").value.trim();
+  if(!roll)return say("Enter your roll number.");
+  const me=rows.find(r=>r.roll===roll);
+  if(!me)return say("Roll number "+roll+" isn’t in this sheet.");
+  say("");
+  const S=stat("spi",me),C=stat("cpi",me);
+  const both=rows.filter(r=>r.spi>me.spi&&r.cpi>me.cpi).length;
+  const hs=a=>a.higher.length?`${a.higher.length} ${a.higher.length===1?"student has":"students have"} a higher ${a.key.toUpperCase()} than you.`:`Nobody has a higher ${a.key.toUpperCase()} than you.`;
+  const bothTxt=both?`${both} ${both===1?"student is":"students are"} ahead of you on both.`:"Nobody is ahead of you on both.";
+  $("#out").innerHTML=`
+    <h2 class="hl">${hs(S)} ${hs(C)}</h2>
+    <p class="lede">${esc(me.name||"Roll "+me.roll)}, roll ${esc(me.roll)}. ${bothTxt}</p>
+    ${band(S)}${band(C)}
+    <section class="sec"><h2>SPI against CPI</h2>
+      <p class="n">Each dot is a student. The dashed lines cross at you, and everyone in the shaded corner beats you on both.</p>
+      <div class="map">${scatter(me)}</div>
+      <div class="key"><span><i style="background:var(--me)"></i>You</span><span><i style="background:var(--ahead)"></i>Ahead on both (${both})</span><span><i style="background:var(--cls)"></i>Everyone else</span></div></section>
+    <section class="sec two">
+      <div><h2>Around you in SPI</h2><ol class="lad">${ladder("spi",me)}</ol>${ahead(S)}</div>
+      <div><h2>Around you in CPI</h2><ol class="lad">${ladder("cpi",me)}</ol>${ahead(C)}</div></section>${subjectSection(me)}`;
+  $("#out").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
+}
+
+const drop=$("#drop");
+$("#file").addEventListener("change",e=>e.target.files[0]&&readFile(e.target.files[0]));
+drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("on")});
+drop.addEventListener("dragleave",()=>drop.classList.remove("on"));
+drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("on");e.dataTransfer.files[0]&&readFile(e.dataTransfer.files[0])});
+drop.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("#file").click()}});
+$("#go").addEventListener("click",run);
+$("#roll").addEventListener("keydown",e=>e.key==="Enter"&&run());
+$("#demo").addEventListener("click",()=>{demo();run()});
+</script>
+</body>
+</html>
