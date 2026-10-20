@@ -904,18 +904,38 @@ function run(){
 
   const spi=stat("spi",currentStudent);
   const cpi=stat("cpi",currentStudent);
-  const both=rows.filter(row=>row.spi>currentStudent.spi&&row.cpi>currentStudent.cpi).length;
+
+  const studentsAheadOnBoth=rows.filter(row =>
+    row.spi > currentStudent.spi &&
+    row.cpi > currentStudent.cpi
+  ).length;
+
+  /*
+    Important:
+    Use .length here.
+    Do not print spi.higher directly,
+    because spi.higher is an array of student objects.
+  */
+  const higherCountText = (statistic, label) => {
+    const count=statistic.higher.length;
+
+    return `
+      ${count}
+      ${count===1 ? "student has" : "students have"}
+      a higher ${label} than you.
+    `;
+  };
 
   say("");
 
   $("#out").innerHTML=`
     <h2 class="hl">
-      ${spi.higher.length} students have a higher SPI and
-      ${cpi.higher.length} have a higher CPI than you.
+      ${higherCountText(spi,"SPI")}
+      ${higherCountText(cpi,"CPI")}
     </h2>
 
     <p class="lede">
-      ${esc(currentStudent.name||"Student")},
+      ${esc(currentStudent.name || "Student")},
       roll number ${esc(currentStudent.roll)}.
     </p>
 
@@ -924,41 +944,62 @@ function run(){
 
     <section class="sec">
       <h2>SPI against CPI</h2>
+
       <p class="n">
-        Each dot is a student. The shaded corner shows students
-        ahead of you on both SPI and CPI.
+        Each dot is a student. The dashed lines cross at you,
+        and the shaded corner shows students ahead on both.
       </p>
 
-      <div class="map">${scatter(currentStudent)}</div>
+      <div class="map">
+        ${scatter(currentStudent)}
+      </div>
 
       <div class="key">
-        <span><i style="background:var(--pink)"></i>You</span>
-        <span><i style="background:var(--purple)"></i>Ahead on both (${both})</span>
-        <span><i style="background:var(--grey)"></i>Everyone else</span>
+        <span>
+          <i style="background:var(--me)"></i>
+          You
+        </span>
+
+        <span>
+          <i style="background:var(--ahead)"></i>
+          Ahead on both (${studentsAheadOnBoth})
+        </span>
+
+        <span>
+          <i style="background:var(--cls)"></i>
+          Everyone else
+        </span>
       </div>
     </section>
 
     <section class="sec two">
       <div>
         <h2>Around you in SPI</h2>
-        <ol class="lad">${ladder("spi",currentStudent)}</ol>
+        <ol class="lad">
+          ${ladder("spi",currentStudent)}
+        </ol>
         ${ahead(spi)}
       </div>
 
       <div>
         <h2>Around you in CPI</h2>
-        <ol class="lad">${ladder("cpi",currentStudent)}</ol>
+        <ol class="lad">
+          ${ladder("cpi",currentStudent)}
+        </ol>
         ${ahead(cpi)}
       </div>
     </section>
 
-    ${subjectsSection(currentStudent)}
+    ${subjectSection(currentStudent)}
   `;
 
-  $("#out").scrollIntoView({behavior:"smooth"});
+  $("#out").scrollIntoView({
+    behavior:matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? "auto"
+      : "smooth"
+  });
 }
-
-const drop=$("#drop");
+  const drop=$("#drop");
 
 $("#file").addEventListener("change",event=>{
   if(event.target.files[0])readFile(event.target.files[0]);
