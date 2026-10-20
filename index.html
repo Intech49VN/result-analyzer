@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -494,7 +493,6 @@ svg .you{
   .wrap{width:calc(100% - 22px)}
   .band{gap:15px}
   .big{font-size:55px}
-  .privacy{display:none}
 }
 </style>
 </head>
@@ -589,7 +587,13 @@ function readFile(file){
 
       if(!rollKey||!spiKey||!cpiKey)throw Error("columns");
 
-      subjects=keys.filter(k=>![nameKey,rollKey,spiKey,cpiKey].includes(k));
+      // every other column is a subject (the Result column and blank headers are skipped)
+      const subs=keys.filter(k=>
+        ![nameKey,rollKey,spiKey,cpiKey].includes(k) &&
+        norm(k)!=="result" &&
+        !String(k).startsWith("__EMPTY") &&
+        String(k).trim()
+      );
 
       const list=data.map(row=>({
         name:String(nameKey?row[nameKey]:"").trim(),
@@ -597,13 +601,13 @@ function readFile(file){
         spi:parseFloat(row[spiKey]),
         cpi:parseFloat(row[cpiKey]),
         grades:Object.fromEntries(
-          subjects.map(s=>[s,String(row[s]??"").trim().toUpperCase()])
+          subs.map(s=>[s,String(row[s]??"").trim().toUpperCase()])
         )
       })).filter(x=>x.roll&&!isNaN(x.spi)&&!isNaN(x.cpi));
 
       if(!list.length)throw Error("students");
 
-      loaded(list,file.name,subjects);
+      loaded(list,file.name,subs);
     }catch(error){
       const messages={
         empty:"That spreadsheet is empty.",
@@ -646,10 +650,10 @@ function hist(key,me){
   });
 
   const max=Math.max(...bins);
-  const W=460,H=220,pad=25,bw=W/count;
+  const W=460,H=220,bw=W/count;
   const selected=Math.min(count-1,Math.floor((me[key]-low)/.5));
 
-  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img">`;
+  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${key.toUpperCase()} distribution of the class">`;
 
   bins.forEach((amount,i)=>{
     const height=(H-55)*amount/max;
@@ -687,7 +691,7 @@ function scatter(me){
   const X=v=>p.l+(v-minX)/(maxX-minX)*(W-p.l-p.r);
   const Y=v=>H-p.b-(v-minY)/(maxY-minY)*(H-p.t-p.b);
 
-  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img">`;
+  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="SPI against CPI for the whole class">`;
 
   svg+=`
     <rect class="quad"
@@ -700,7 +704,6 @@ function scatter(me){
     <line x1="${X(me.spi)}" x2="${X(me.spi)}"
       y1="${p.t}" y2="${H-p.b}"
       stroke="var(--pink)" stroke-dasharray="6 6">
-
     </line>
 
     <line x1="${p.l}" x2="${W-p.r}"
@@ -727,11 +730,17 @@ function scatter(me){
     `;
   });
 
+  // flip the "You" label to the left when the dot is near the right edge
+  const nearRight=X(me.spi)>W*.75;
+
   svg+=`
     <circle cx="${X(me.spi)}" cy="${Y(me.cpi)}"
       r="9" fill="var(--pink)" stroke="var(--bg)" stroke-width="3">
     </circle>
-    <text class="you" x="${X(me.spi)+12}" y="${Y(me.cpi)-12}">You</text>
+    <text class="you"
+      x="${X(me.spi)+(nearRight?-13:12)}"
+      y="${Y(me.cpi)-12}"
+      text-anchor="${nearRight?"end":"start"}">You</text>
   `;
 
   return svg+"</svg>";
@@ -740,10 +749,12 @@ function scatter(me){
 function ladder(key,me){
   const sorted=[...rows].sort((a,b)=>b[key]-a[key]);
   const index=sorted.indexOf(me);
+  // tied students share the same rank, matching the rank shown above
+  const rankOf=r=>1+rows.filter(x=>x[key]>r[key]).length;
 
   return sorted.slice(Math.max(0,index-3),index+4).map(row=>`
     <li class="${row===me?"me":""}">
-      <span class="rk">${sorted.indexOf(row)+1}</span>
+      <span class="rk">${rankOf(row)}</span>
       <span class="nm">${esc(row.name||row.roll)}${row===me?" (you)":""}</span>
       <span class="bar"><i style="width:${Math.min(100,row[key]*10)}%"></i></span>
       <span class="vl">${row[key].toFixed(2)}</span>
@@ -825,7 +836,7 @@ function subjectsSection(me){
                 </span>
               </div>
 
-              <div>
+              <div class="subject-compare">
                 <div class="subject-bar">
                   <i class="higher" style="width:${high}%"></i>
                   <i class="lower" style="width:${low}%"></i>
@@ -854,8 +865,8 @@ function subjectsSection(me){
     <section class="sec">
       <h2>Subject by subject</h2>
       <p class="n">
-        Students with the same, missing, or F grade are excluded
-        from the higher and lower counts.
+        Students with the same grade as you, or with no grade in a
+        subject, are not counted as higher or lower.
       </p>
       ${group("Theory",theory)}
       ${group("Labs",labs)}
@@ -871,7 +882,7 @@ function band(statistic){
         <p class="big">${statistic.value.toFixed(2)}</p>
         <ul class="facts">
           <li>Rank <b>${statistic.rank}</b> of ${rows.length}</li>
-          <li>Ahead of <b>${statistic.lower}</b> students</li>
+          <li>Ahead of <b>${statistic.lower.length}</b> students</li>
           <li>Class average <b>${statistic.average.toFixed(2)}</b></li>
           <li>Highest score <b>${statistic.highest.toFixed(2)}</b></li>
         </ul>
@@ -910,13 +921,8 @@ function run(){
     row.cpi > currentStudent.cpi
   ).length;
 
-  /*
-    Important:
-    Use .length here.
-    Do not print spi.higher directly,
-    because spi.higher is an array of student objects.
-  */
-  const higherCountText = (statistic, label) => {
+  // .higher is a list of students, so we show its length (a number)
+  const higherCountText=(statistic,label)=>{
     const count=statistic.higher.length;
 
     return `
@@ -956,17 +962,17 @@ function run(){
 
       <div class="key">
         <span>
-          <i style="background:var(--me)"></i>
+          <i style="background:var(--pink)"></i>
           You
         </span>
 
         <span>
-          <i style="background:var(--ahead)"></i>
+          <i style="background:var(--purple)"></i>
           Ahead on both (${studentsAheadOnBoth})
         </span>
 
         <span>
-          <i style="background:var(--cls)"></i>
+          <i style="background:var(--grey)"></i>
           Everyone else
         </span>
       </div>
@@ -990,7 +996,7 @@ function run(){
       </div>
     </section>
 
-    ${subjectSection(currentStudent)}
+    ${subjectsSection(currentStudent)}
   `;
 
   $("#out").scrollIntoView({
@@ -999,6 +1005,7 @@ function run(){
       : "smooth"
   });
 }
+
 const drop=$("#drop");
 
 $("#file").addEventListener("change",event=>{
