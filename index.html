@@ -1,4 +1,15 @@
+Copy this entire code into `index.html`. It keeps:
 
+- SPI and CPI charts
+- SPI vs CPI scatter plot
+- Nearby SPI and CPI student names
+- Students ahead lists
+- Separate Theory and Lab comparisons
+- Higher/lower counts only
+- Interactive upload and expandable sections
+- New textured academic design
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -999,7 +1010,7 @@ function run(){
       : "smooth"
   });
 }
-  const drop=$("#drop");
+const drop=$("#drop");
 
 $("#file").addEventListener("change",event=>{
   if(event.target.files[0])readFile(event.target.files[0]);
@@ -1039,3 +1050,4 @@ $("#roll").addEventListener("keydown",event=>{
 
 </body>
 </html>
+```
