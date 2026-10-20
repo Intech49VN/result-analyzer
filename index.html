@@ -1,262 +1,1014 @@
-<!DOCTYPE html>
+
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Result analyzer</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap">
-<style>
-:root{--bg:#EEF1F7;--panel:#FFFFFF;--ink:#14213D;--mut:#5B6785;--line:#D9DFEC;--me:#E5254F;--cls:#8896B3;--ahead:#3B4CCA;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1526;--panel:#17203A;--ink:#E8ECF6;--mut:#98A3C0;--line:#27325A;--me:#FF6B8B;--cls:#6F7FA3;--ahead:#8E9BFF}}
-:root[data-theme="dark"]{--bg:#0E1526;--panel:#17203A;--ink:#E8ECF6;--mut:#98A3C0;--line:#27325A;--me:#FF6B8B;--cls:#6F7FA3;--ahead:#8E9BFF}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-.wrap{max-width:960px;margin:0 auto;padding:28px 18px 70px}
-h1{font-size:20px;font-weight:800;margin:0 0 4px;letter-spacing:-.01em}
-.sub{margin:0 0 22px;color:var(--mut);max-width:60ch}
-.setup{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch}
-.drop{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:18px;border:2px dashed var(--line);border-radius:14px;cursor:pointer;background:var(--panel);transition:border-color .2s}
-.drop:hover,.drop.on{border-color:var(--me)}
-.drop strong{font-weight:600}.drop span{color:var(--mut);font-size:14px}
-.ask{display:flex;gap:8px;align-items:stretch}
-input[type=text]{flex:1;min-width:0;font:inherit;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink)}
-button{font:inherit;font-weight:600;cursor:pointer;border:0;border-radius:12px;padding:12px 20px;background:var(--ink);color:var(--bg)}
-button.link{background:none;color:var(--ahead);padding:0;text-decoration:underline;font-weight:400}
-:focus-visible{outline:3px solid var(--ahead);outline-offset:2px}
-.hint{grid-column:1/-1;margin:0;color:var(--mut);font-size:14px}
-.msg{grid-column:1/-1;margin:0;min-height:1.4em;color:var(--me);font-weight:600}
-.hl{font-size:clamp(28px,5vw,48px);line-height:1.08;font-weight:800;letter-spacing:-.03em;margin:46px 0 12px;max-width:22em}
-.lede{color:var(--mut);margin:0 0 30px;font-size:18px}
-.band{display:grid;grid-template-columns:minmax(0,260px) 1fr;gap:26px;padding:26px 0;border-top:1px solid var(--line)}
-.band h2,.sec h2{font-size:15px;font-weight:600;color:var(--mut);margin:0 0 2px}
-.big{font-size:56px;font-weight:800;line-height:1;margin:0 0 12px;letter-spacing:-.03em}
-.facts{margin:0;padding-left:18px;color:var(--mut)}.facts b{color:var(--ink)}
-.chart svg,.map svg{width:100%;height:auto;display:block}
-.sec{padding:26px 0;border-top:1px solid var(--line)}
-.sec p.n{margin:4px 0 14px;color:var(--mut);max-width:62ch}
-.map{background:var(--panel);border-radius:16px;padding:12px;border:1px solid var(--line)}
-.key{display:flex;gap:18px;flex-wrap:wrap;margin:12px 2px 0;font-size:14px;color:var(--mut)}
-.key i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:30px}
-ol.lad{list-style:none;margin:8px 0 0;padding:0}
-ol.lad li{display:grid;grid-template-columns:28px 1fr 70px 44px;gap:8px;align-items:center;padding:7px 8px;border-radius:10px;font-size:15px}
-ol.lad li.me{background:var(--panel);outline:2px solid var(--me);font-weight:600}
-.rk{color:var(--mut)}.vl{text-align:right;font-variant-numeric:tabular-nums}
-.nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:var(--cls)}
-.me .bar i{background:var(--me)}
-details{margin-top:10px;color:var(--mut)}summary{cursor:pointer;font-weight:600;color:var(--ink)}
-details ul{list-style:none;margin:8px 0 0;padding:0;max-height:260px;overflow:auto}
-details li{display:flex;justify-content:space-between;gap:10px;padding:5px 2px;border-bottom:1px solid var(--line);font-size:15px}
-svg text{font-family:inherit;fill:var(--mut);font-size:10px}
-svg .you{fill:var(--me);font-weight:800;font-size:11px}
-.bar-r{fill:var(--cls);opacity:.55;transform-box:fill-box;transform-origin:bottom;animation:grow .7s cubic-bezier(.2,.8,.2,1) both}
-.bar-r.me{fill:var(--me);opacity:1}
-@keyframes grow{from{transform:scaleY(0)}}
-.quad{fill:var(--ahead);opacity:.1}
-.srow{display:grid;grid-template-columns:minmax(0,190px) 1fr minmax(0,230px);gap:18px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
-.srow:last-of-type{border-bottom:0}
-.sn{font-weight:600}
-.chip{display:inline-block;min-width:34px;text-align:center;padding:2px 10px;border-radius:999px;background:var(--me);color:var(--bg);font-weight:800;margin-top:4px}
-.seg{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--line);margin-bottom:6px}
-.seg i{display:block;height:100%;min-width:0}
-.stx{font-size:14px;color:var(--mut)}.stx b{color:var(--ink)}
-@media (max-width:720px){.setup,.two,.band,.srow{grid-template-columns:1fr}.band{gap:14px}.srow{gap:10px}}
-@media (prefers-reduced-motion:reduce){.bar-r{animation:none}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Result Analyzer — Intech</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --paper: #fffdf7;
+      --paper-2: #f7f4ea;
+      --ink: #17233f;
+      --muted: #6d7892;
+      --line: #dce1ec;
+      --blue: #315bea;
+      --blue-dark: #203dba;
+      --lime: #b8e83e;
+      --orange: #ff9d55;
+      --pink: #f36c9c;
+      --purple: #9486ee;
+      --white: #ffffff;
+      --shadow: 0 18px 45px rgba(28, 49, 98, .09);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(184,232,62,.22), transparent 20rem),
+        radial-gradient(circle at 92% 17%, rgba(148,134,238,.16), transparent 22rem),
+        var(--paper);
+      font: 16px/1.55 "Bricolage Grotesque", system-ui, sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .25;
+      background-image:
+        linear-gradient(rgba(23,35,63,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(23,35,63,.025) 1px, transparent 1px);
+      background-size: 26px 26px;
+      mask-image: linear-gradient(to bottom, #000, transparent 80%);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 34px));
+      margin: auto;
+      padding: 28px 0 80px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 60px;
+    }
+
+    .brand {
+      color: var(--blue-dark);
+      font-size: 22px;
+      font-weight: 800;
+      font-style: italic;
+      letter-spacing: -.06em;
+    }
+
+    .brand small {
+      display: block;
+      margin-top: -5px;
+      color: var(--muted);
+      font-size: 10px;
+      font-style: normal;
+      font-weight: 500;
+      letter-spacing: .04em;
+    }
+
+    .privacy {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: right;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr .8fr;
+      gap: 60px;
+      align-items: end;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      max-width: 680px;
+      margin: 0;
+      font-size: clamp(44px, 7vw, 86px);
+      line-height: .94;
+      letter-spacing: -.075em;
+    }
+
+    .highlight {
+      color: var(--blue);
+    }
+
+    .hero p {
+      max-width: 590px;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .setup {
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 18px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: rgba(255,255,255,.8);
+      box-shadow: var(--shadow);
+    }
+
+    .drop {
+      min-height: 190px;
+      display: grid;
+      place-content: center;
+      gap: 7px;
+      padding: 25px;
+      border: 2px dashed #aeb9d4;
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(184,232,62,.22), transparent 8rem),
+        var(--paper-2);
+      text-align: center;
+      transition: .2s ease;
+    }
+
+    .drop:hover,
+    .drop.active {
+      border-color: var(--blue);
+      transform: translateY(-2px);
+      background-color: #f0f4ff;
+    }
+
+    .drop input {
+      display: none;
+    }
+
+    .upload-icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 5px;
+      border-radius: 15px;
+      background: var(--blue);
+      color: white;
+      font-size: 25px;
+    }
+
+    .drop strong {
+      font-size: 19px;
+    }
+
+    .drop span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .controls label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      outline: 0;
+      background: white;
+      color: var(--ink);
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(49,91,234,.12);
+    }
+
+    .primary {
+      padding: 14px 20px;
+      border: 0;
+      border-radius: 13px;
+      background: var(--blue);
+      color: white;
+      font-weight: 700;
+      transition: .2s ease;
+    }
+
+    .primary:hover {
+      background: var(--blue-dark);
+      transform: translateY(-2px);
+    }
+
+    .message {
+      min-height: 25px;
+      margin: 18px 3px 0;
+      color: #d54666;
+      font-weight: 600;
+    }
+
+    .loading {
+      display: none;
+      align-items: center;
+      gap: 9px;
+      color: var(--blue);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .loading.show {
+      display: flex;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #c9d3f5;
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .error-card {
+      display: grid;
+      place-items: center;
+      gap: 8px;
+      margin-top: 35px;
+      padding: 45px 20px;
+      border: 1px solid #ffd4df;
+      border-radius: 24px;
+      background: #fff3f6;
+      text-align: center;
+    }
+
+    .error-card .emoji {
+      font-size: 42px;
+    }
+
+    .results {
+      margin-top: 70px;
+    }
+
+    .intro {
+      margin-bottom: 30px;
+    }
+
+    .intro h2 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 48px);
+      letter-spacing: -.055em;
+    }
+
+    .intro p {
+      margin: 8px 0 0;
+      color: var(--muted);
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+
+    .metric {
+      position: relative;
+      overflow: hidden;
+      padding: 24px;
+      border-radius: 24px;
+      background: var(--ink);
+      color: white;
+    }
+
+    .metric:nth-child(2) {
+      background: var(--blue);
+    }
+
+    .metric::after {
+      content: "";
+      position: absolute;
+      width: 150px;
+      height: 150px;
+      right: -45px;
+      bottom: -65px;
+      border: 22px solid rgba(255,255,255,.13);
+      border-radius: 50%;
+    }
+
+    .metric-title {
+      color: rgba(255,255,255,.72);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .metric-value {
+      margin: 8px 0 18px;
+      font-size: 58px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -.07em;
+    }
+
+    .metric-info {
+      color: rgba(255,255,255,.78);
+      font-size: 14px;
+    }
+
+    .metric-info b {
+      color: white;
+    }
+
+    .section {
+      margin-top: 55px;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 18px;
+    }
+
+    .section h2 {
+      margin: 0;
+      font-size: 27px;
+      letter-spacing: -.04em;
+    }
+
+    .section-heading p {
+      max-width: 510px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .subject-group {
+      margin-top: 26px;
+    }
+
+    .group-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      color: var(--blue-dark);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .group-title::after {
+      content: "";
+      height: 1px;
+      flex: 1;
+      background: var(--line);
+    }
+
+    .subject {
+      margin: 10px 0;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,.85);
+      overflow: hidden;
+      transition: .2s ease;
+    }
+
+    .subject:hover {
+      border-color: #b9c6ed;
+      box-shadow: 0 8px 25px rgba(28,49,98,.06);
+    }
+
+    .subject summary {
+      display: grid;
+      grid-template-columns: minmax(170px, 1fr) minmax(180px, 1.2fr) auto 22px;
+      gap: 18px;
+      align-items: center;
+      padding: 18px 20px;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .subject summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .subject summary::after {
+      content: "+";
+      color: var(--blue);
+      font-size: 23px;
+      font-weight: 500;
+    }
+
+    .subject[open] summary::after {
+      content: "−";
+    }
+
+    .subject-name {
+      font-weight: 700;
+    }
+
+    .subject-kind {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .grade {
+      display: inline-grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: var(--lime);
+      color: var(--ink);
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .comparison {
+      min-width: 180px;
+    }
+
+    .comparison-bar {
+      display: flex;
+      height: 9px;
+      margin-bottom: 7px;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #edf0f6;
+    }
+
+    .higher-bar {
+      background: var(--orange);
+    }
+
+    .lower-bar {
+      background: var(--lime);
+    }
+
+    .comparison-counts {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .comparison-counts b {
+      color: var(--ink);
+    }
+
+    .subject-detail {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      padding: 0 20px 20px;
+      border-top: 1px solid var(--line);
+    }
+
+    .detail-box {
+      margin-top: 16px;
+      padding: 15px;
+      border-radius: 14px;
+      background: var(--paper-2);
+    }
+
+    .detail-box strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 13px;
+    }
+
+    .detail-box span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .empty {
+      padding: 35px;
+      border: 1px dashed var(--line);
+      border-radius: 20px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 800px) {
+      .hero,
+      .setup {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        gap: 20px;
+      }
+
+      .topbar {
+        margin-bottom: 42px;
+      }
+
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .subject summary {
+        grid-template-columns: 1fr auto 22px;
+      }
+
+      .comparison {
+        grid-column: 1 / -1;
+        grid-row: 2;
+      }
+
+      .subject-detail {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .page {
+        width: min(100% - 22px, 1180px);
+        padding-top: 18px;
+      }
+
+      .privacy {
+        display: none;
+      }
+
+      h1 {
+        font-size: 53px;
+      }
+
+      .setup {
+        padding: 12px;
+        border-radius: 21px;
+      }
+
+      .drop {
+        min-height: 155px;
+      }
+
+      .metric-value {
+        font-size: 50px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .001ms !important;
+        scroll-behavior: auto !important;
+        transition-duration: .001ms !important;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<main class="wrap">
-  <h1>Result analyzer</h1>
-  <p class="sub">Add the class Excel sheet and your roll number to see how your SPI and CPI compare with everyone else’s. The sheet is read inside your browser and is never uploaded.</p>
-  <section class="setup">
-    <label class="drop" id="drop" tabindex="0">
-      <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden>
-      <strong id="dropT">Choose the Excel sheet</strong>
-      <span id="dropS">or drag it onto this box</span>
-    </label>
-    <div class="ask">
-      <input type="text" id="roll" inputmode="numeric" placeholder="Your roll number" autocomplete="off" aria-label="Your roll number">
-      <button id="go">Analyze</button>
-    </div>
-    <p class="hint">No sheet handy? <button class="link" id="demo" type="button">Try it with demo data</button></p>
-    <p class="msg" id="msg" role="alert"></p>
-  </section>
-  <div id="out"></div>
-</main>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script>
-const $=s=>document.querySelector(s);
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const norm=k=>String(k).toLowerCase().replace(/[^a-z]/g,"");
-let rows=[],subjects=[];
-const DEMO_SUBS=["Physics II","Mathematics II","Data Structure","Computer Programming","Environment and Ecology"];
+  <main class="page">
+    <header class="topbar">
+      <div class="brand">
+        INTECH
+        <small>Made by Intech</small>
+      </div>
+      <div class="privacy">Your spreadsheet is processed inside your browser.</div>
+    </header>
 
-function say(t){$("#msg").textContent=t}
-function loaded(list,label,subs){rows=list;subjects=subs||[];$("#dropT").textContent=label;$("#dropS").textContent=list.length+" students loaded";say("")}
+    <section class="hero">
+      <div>
+        <h1>Understand your results <span class="highlight">better.</span></h1>
+        <p>
+          Compare your SPI, CPI, and subject-wise grades with your class
+          without uploading your academic data anywhere.
+        </p>
+      </div>
+    </section>
 
-function readFile(file){
-  const r=new FileReader();
-  r.onerror=()=>say("Couldn’t read that file. Save it as .xlsx and try again.");
-  r.onload=e=>{
-    try{
-      const wb=XLSX.read(e.target.result,{type:"array"});
-      const js=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""});
-      if(!js.length)return say("That sheet is empty.");
-      const keys=Object.keys(js[0]),pick=n=>keys.find(k=>norm(k)===n);
-      const kn=pick("name"),kr=pick("rollno"),ks=pick("spi"),kc=pick("cpi");
-      if(!kr||!ks||!kc)return say("Couldn’t find the Roll No, SPI and CPI columns. Use the sheet made by the results script.");
-      const subs=keys.filter(k=>![kn,kr,ks,kc].includes(k)&&String(k).trim());
-      const list=js.map(x=>({name:String(kn?x[kn]:"").trim(),roll:String(x[kr]).trim(),spi:parseFloat(x[ks]),cpi:parseFloat(x[kc]),g:Object.fromEntries(subs.map(k=>[k,String(x[k]).trim()]))}))
-        .filter(x=>x.roll&&!isNaN(x.spi)&&!isNaN(x.cpi));
-      if(!list.length)return say("No students with both SPI and CPI were found in that sheet.");
-      loaded(list,file.name,subs);
-    }catch(err){say("That file doesn’t look like an Excel sheet.")}
-  };
-  r.readAsArrayBuffer(file);
-}
+    <section class="setup" aria-label="Upload result sheet">
+      <label class="drop" id="drop" tabindex="0">
+        <input id="file" type="file" accept=".xlsx,.xls,.csv">
+        <span class="upload-icon">↑</span>
+        <strong id="dropTitle">Choose your Excel sheet</strong>
+        <span id="dropSubtitle">or drag and drop it here</span>
+      </label>
 
-function demo(){
-  const g=()=>(Math.random()+Math.random()+Math.random()-1.5)/.75;
-  const cl=v=>Math.min(9.95,Math.max(5,Math.round(v*100)/100));
-  const list=Array.from({length:60},(_,i)=>{const b=7.4+g()*.9;
-    return{name:"Student "+String(i+1).padStart(2,"0"),roll:String(25116101+i),spi:cl(b+g()*.45),cpi:cl(b+g()*.25),g:Object.fromEntries(DEMO_SUBS.map(s=>[s,["C","B","A","O"][Math.max(0,Math.min(3,Math.round((b+g()*.6-5.6)*1.2+g()*.3)))]]))}});
-  loaded(list,"Demo data",DEMO_SUBS);$("#roll").value="25116107";
-}
+      <div class="controls">
+        <label for="roll">Your roll number</label>
+        <input id="roll" type="text" inputmode="numeric" autocomplete="off" placeholder="Enter roll number">
+        <button class="primary" id="analyze">Analyze results</button>
+        <div class="loading" id="loading">
+          <span class="spinner"></span>
+          Reading your result sheet…
+        </div>
+      </div>
+    </section>
 
-const rankOf=(key,r)=>1+rows.filter(x=>x[key]>r[key]).length;
-function stat(key,me){
-  const N=rows.length,higher=rows.filter(r=>r[key]>me[key]).sort((a,b)=>b[key]-a[key]);
-  const lower=rows.filter(r=>r[key]<me[key]).length;
-  return{key,val:me[key],higher,same:rows.filter(r=>r!==me&&r[key]===me[key]).length,rank:higher.length+1,
-    beat:N>1?Math.round(lower/(N-1)*100):100,avg:rows.reduce((a,r)=>a+r[key],0)/N,top:Math.max(...rows.map(r=>r[key]))};
-}
+    <p class="message" id="message" role="alert"></p>
+    <div id="output"></div>
+  </main>
 
-function hist(key,me){
-  const v=rows.map(r=>r[key]),lo=Math.floor(Math.min(...v)*2)/2,hi=Math.max(Math.ceil(Math.max(...v)*2)/2,lo+.5);
-  const nb=Math.round((hi-lo)/.5),bins=Array(nb).fill(0);
-  v.forEach(x=>bins[Math.min(nb-1,Math.floor((x-lo)/.5))]++);
-  const mx=Math.max(...bins),W=420,H=200,pb=24,top=34,bw=W/nb,mi=Math.min(nb-1,Math.floor((me[key]-lo)/.5));
-  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${key.toUpperCase()} distribution of the class">`;
-  bins.forEach((c,i)=>{
-    const h=(H-pb-top)*c/mx,x=i*bw+3,y=H-pb-h,cx=x+(bw-6)/2;
-    s+=`<rect class="bar-r${i===mi?" me":""}" x="${x}" y="${y}" width="${bw-6}" height="${h}" rx="4" style="animation-delay:${i*45}ms"/>`;
-    if(c)s+=`<text x="${cx}" y="${y-5}" text-anchor="middle">${c}</text>`;
-    if(i===mi)s+=`<text class="you" x="${cx}" y="${Math.max(11,y-19)}" text-anchor="middle">You</text>`;
-    s+=`<text x="${cx}" y="${H-7}" text-anchor="middle">${(lo+i*.5).toFixed(1)}</text>`;
-  });
-  return s+"</svg>";
-}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-function scatter(me){
-  const W=460,H=372,p={l:42,r:14,t:30,b:36},pad=.15;
-  const xs=rows.map(r=>r.spi),ys=rows.map(r=>r.cpi);
-  const x0=Math.min(...xs)-pad,x1=Math.max(...xs)+pad,y0=Math.min(...ys)-pad,y1=Math.max(...ys)+pad;
-  const X=v=>p.l+(v-x0)/(x1-x0)*(W-p.l-p.r),Y=v=>H-p.b-(v-y0)/(y1-y0)*(H-p.t-p.b);
-  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="SPI against CPI for the whole class">`;
-  s+=`<rect class="quad" x="${X(me.spi)}" y="${p.t}" width="${W-p.r-X(me.spi)}" height="${Y(me.cpi)-p.t}"/>`;
-  for(let i=0;i<=4;i++){
-    const xv=x0+(x1-x0)*i/4,yv=y0+(y1-y0)*i/4;
-    s+=`<text x="${X(xv)}" y="${H-14}" text-anchor="middle">${xv.toFixed(1)}</text><text x="${p.l-8}" y="${Y(yv)+3}" text-anchor="end">${yv.toFixed(1)}</text>`;
-  }
-  s+=`<text x="${(W+p.l)/2}" y="${H-1}" text-anchor="middle">SPI</text><text x="${p.l-8}" y="13" text-anchor="end">CPI</text>`;
-  s+=`<line x1="${X(me.spi)}" x2="${X(me.spi)}" y1="${p.t}" y2="${H-p.b}" stroke="var(--me)" stroke-dasharray="4 4" opacity=".6"/>`;
-  s+=`<line x1="${p.l}" x2="${W-p.r}" y1="${Y(me.cpi)}" y2="${Y(me.cpi)}" stroke="var(--me)" stroke-dasharray="4 4" opacity=".6"/>`;
-  rows.forEach(r=>{if(r===me)return;const a=r.spi>me.spi&&r.cpi>me.cpi;
-    s+=`<circle cx="${X(r.spi)}" cy="${Y(r.cpi)}" r="${a?4.5:3.5}" fill="${a?"var(--ahead)":"var(--cls)"}" opacity="${a?.9:.5}"><title>${esc(r.name||r.roll)}: SPI ${r.spi.toFixed(2)}, CPI ${r.cpi.toFixed(2)}</title></circle>`});
-  s+=`<circle cx="${X(me.spi)}" cy="${Y(me.cpi)}" r="8" fill="var(--me)" stroke="var(--bg)" stroke-width="3"/>`;
-  const right=X(me.spi)>W*.7;
-  s+=`<text class="you" x="${X(me.spi)+(right?-13:13)}" y="${Y(me.cpi)-10}" text-anchor="${right?"end":"start"}">You</text>`;
-  return s+"</svg>";
-}
+  <script>
+    const $ = selector => document.querySelector(selector);
 
-function ladder(key,me){
-  const s=[...rows].sort((a,b)=>b[key]-a[key]),i=s.indexOf(me);
-  return s.slice(Math.max(0,i-3),i+4).map(r=>`<li class="${r===me?"me":""}"><span class="rk">${rankOf(key,r)}</span><span class="nm">${esc(r.name||r.roll)}${r===me?" (you)":""}</span><span class="bar"><i style="width:${Math.min(100,r[key]*10)}%"></i></span><span class="vl">${r[key].toFixed(2)}</span></li>`).join("");
-}
-function ahead(st){
-  if(!st.higher.length)return `<details open><summary>Nobody is ahead of you</summary></details>`;
-  return `<details><summary>Everyone ahead of you (${st.higher.length})</summary><ul>${st.higher.map(r=>`<li><span>${esc(r.name||r.roll)}</span><span>${r[st.key].toFixed(2)} (+${(r[st.key]-st.val).toFixed(2)})</span></li>`).join("")}</ul></details>`;
-}
-function band(st){
-  const L=st.key.toUpperCase();
-  return `<section class="band"><div><h2>Your ${L}</h2><p class="big">${st.val.toFixed(2)}</p><ul class="facts">
-    <li>Rank <b>${st.rank}</b> of ${rows.length}${st.same?`, tied with ${st.same}`:""}</li>
-    <li>Ahead of <b>${st.beat}%</b> of the class</li>
-    <li>Class average <b>${st.avg.toFixed(2)}</b>, highest <b>${st.top.toFixed(2)}</b></li></ul></div>
-    <div class="chart">${hist(st.key,rows.find(r=>r.roll===$("#roll").value.trim()))}</div></section>`;
-}
+    const escapeHTML = value =>
+      String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[char]));
 
-const ORDER=["O","A+","A","B+","B","C","D","P","F"];
-const gv=g=>{const i=ORDER.indexOf(String(g).trim().toUpperCase());return i<0?null:ORDER.length-i};
-const subName=k=>String(k).replace(/\s*\([^)]*\)\s*$/,"");
+    const normalize = value =>
+      String(value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
-function subjectStats(me){
-  return subjects.map(k=>{
-    const mine=gv(me.g[k]);
-    if(mine===null)return null;
-    const all=rows.map(r=>gv(r.g[k])).filter(v=>v!==null),dist={};
-    rows.forEach(r=>{const x=String(r.g[k]||"").trim().toUpperCase();if(gv(x)!==null)dist[x]=(dist[x]||0)+1});
-    const better=all.filter(v=>v>mine).length;
-    return{k,name:subName(k),grade:String(me.g[k]).trim().toUpperCase(),better,same:all.filter(v=>v===mine).length-1,lower:all.filter(v=>v<mine).length,n:all.length,pct:better/all.length,dist};
-  }).filter(Boolean);
-}
-function gmini(s){
-  const gs=ORDER.filter(g=>s.dist[g]),mx=Math.max(...gs.map(g=>s.dist[g])),W=gs.length*30,H=64;
-  return `<svg viewBox="0 0 ${W} ${H}" style="max-width:${W*1.6}px" role="img" aria-label="Grades in ${esc(s.name)}">`+gs.map((g,i)=>{
-    const h=38*s.dist[g]/mx,x=i*30+4,m=g===s.grade;
-    return `<rect class="bar-r${m?" me":""}" x="${x}" y="${50-h}" width="22" height="${h}" rx="3"/><text x="${x+11}" y="${46-h}" text-anchor="middle">${s.dist[g]}</text><text${m?' class="you"':""} x="${x+11}" y="${H-2}" text-anchor="middle">${esc(g)}</text>`}).join("")+"</svg>";
-}
-function subjectSection(me){
-  const st=subjectStats(me);
-  if(!st.length)return "";
-  const sorted=[...st].sort((a,b)=>a.pct-b.pct||a.name.localeCompare(b.name)),best=sorted[0],weak=sorted[sorted.length-1];
-  const lead=best.pct===weak.pct?"You’re level with the class across your subjects.":`Against the class, ${esc(best.name)} is your strongest subject and ${esc(weak.name)} your weakest.`;
-  return `<section class="sec"><h2>Subject by subject</h2><p class="n">${lead} Subjects are listed from your strongest to your weakest, and each bar shows how the whole class compares with your grade.</p>
-    ${sorted.map(s=>`<div class="srow"><div><div class="sn">${esc(s.name)}</div><span class="chip">${esc(s.grade)}</span></div>
-      <div><div class="seg" role="img" aria-label="${s.better} did better, ${s.same} tied, ${s.lower} did worse"><i style="flex:${s.better};background:var(--ahead)"></i><i style="flex:${s.same+1};background:var(--me)"></i><i style="flex:${s.lower};background:var(--line)"></i></div>
-      <div class="stx"><b>${s.better}</b> did better, <b>${s.same}</b> tied with you, <b>${s.lower}</b> had a lower grade</div></div>
-      <div>${gmini(s)}</div></div>`).join("")}
-    <div class="key"><span><i style="background:var(--ahead)"></i>Better than you</span><span><i style="background:var(--me)"></i>You and anyone tied</span><span><i style="background:var(--line)"></i>Below you</span></div></section>`;
-}
+    let students = [];
+    let subjects = [];
 
-function run(){
-  if(!rows.length)return say("Choose the Excel sheet first, or try the demo data.");
-  const roll=$("#roll").value.trim();
-  if(!roll)return say("Enter your roll number.");
-  const me=rows.find(r=>r.roll===roll);
-  if(!me)return say("Roll number "+roll+" isn’t in this sheet.");
-  say("");
-  const S=stat("spi",me),C=stat("cpi",me);
-  const both=rows.filter(r=>r.spi>me.spi&&r.cpi>me.cpi).length;
-  const hs=a=>a.higher.length?`${a.higher.length} ${a.higher.length===1?"student has":"students have"} a higher ${a.key.toUpperCase()} than you.`:`Nobody has a higher ${a.key.toUpperCase()} than you.`;
-  const bothTxt=both?`${both} ${both===1?"student is":"students are"} ahead of you on both.`:"Nobody is ahead of you on both.";
-  $("#out").innerHTML=`
-    <h2 class="hl">${hs(S)} ${hs(C)}</h2>
-    <p class="lede">${esc(me.name||"Roll "+me.roll)}, roll ${esc(me.roll)}. ${bothTxt}</p>
-    ${band(S)}${band(C)}
-    <section class="sec"><h2>SPI against CPI</h2>
-      <p class="n">Each dot is a student. The dashed lines cross at you, and everyone in the shaded corner beats you on both.</p>
-      <div class="map">${scatter(me)}</div>
-      <div class="key"><span><i style="background:var(--me)"></i>You</span><span><i style="background:var(--ahead)"></i>Ahead on both (${both})</span><span><i style="background:var(--cls)"></i>Everyone else</span></div></section>
-    <section class="sec two">
-      <div><h2>Around you in SPI</h2><ol class="lad">${ladder("spi",me)}</ol>${ahead(S)}</div>
-      <div><h2>Around you in CPI</h2><ol class="lad">${ladder("cpi",me)}</ol>${ahead(C)}</div></section>${subjectSection(me)}`;
-  $("#out").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
-}
+    const gradeOrder = ["F", "D", "C", "B", "B+", "A", "A+", "O"];
 
-const drop=$("#drop");
-$("#file").addEventListener("change",e=>e.target.files[0]&&readFile(e.target.files[0]));
-drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("on")});
-drop.addEventListener("dragleave",()=>drop.classList.remove("on"));
-drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("on");e.dataTransfer.files[0]&&readFile(e.dataTransfer.files[0])});
-drop.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("#file").click()}});
-$("#go").addEventListener("click",run);
-$("#roll").addEventListener("keydown",e=>e.key==="Enter"&&run());
-$("#demo").addEventListener("click",()=>{demo();run()});
-</script>
+    function gradeValue(grade) {
+      const index = gradeOrder.indexOf(String(grade || "").trim().toUpperCase());
+      return index === -1 ? null : index;
+    }
+
+    function showMessage(message) {
+      $("#message").textContent = message;
+    }
+
+    function setLoading(active) {
+      $("#loading").classList.toggle("show", active);
+      $("#analyze").disabled = active;
+    }
+
+    function loadWorkbook(file) {
+      setLoading(true);
+      showMessage("");
+
+      const reader = new FileReader();
+
+      reader.onerror = () => {
+        setLoading(false);
+        showMessage("Could not read this file. Please try another Excel file.");
+      };
+
+      reader.onload = event => {
+        try {
+          const workbook = XLSX.read(event.target.result, { type: "array" });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const data = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+
+          if (!data.length) {
+            throw new Error("empty");
+          }
+
+          const columns = Object.keys(data[0]);
+          const findColumn = expected =>
+            columns.find(column => normalize(column) === expected);
+
+          const nameColumn = findColumn("name");
+          const rollColumn = findColumn("rollno");
+          const spiColumn = findColumn("spi");
+          const cpiColumn = findColumn("cpi");
+
+          if (!rollColumn || !spiColumn || !cpiColumn) {
+            throw new Error("columns");
+          }
+
+          subjects = columns.filter(column =>
+            ![nameColumn, rollColumn, spiColumn, cpiColumn].includes(column) &&
+            String(column).trim()
+          );
+
+          students = data
+            .map(row => ({
+              name: String(nameColumn ? row[nameColumn] : "").trim(),
+              roll: String(row[rollColumn]).trim(),
+              spi: Number.parseFloat(row[spiColumn]),
+              cpi: Number.parseFloat(row[cpiColumn]),
+              grades: Object.fromEntries(
+                subjects.map(subject => [
+                  subject,
+                  String(row[subject] ?? "").trim().toUpperCase()
+                ])
+              )
+            }))
+            .filter(student =>
+              student.roll &&
+              Number.isFinite(student.spi) &&
+              Number.isFinite(student.cpi)
+            );
+
+          if (!students.length) {
+            throw new Error("students");
+          }
+
+          $("#dropTitle").textContent = file.name;
+          $("#dropSubtitle").textContent =
+            `${students.length} students loaded successfully`;
+          showMessage("");
+        } catch (error) {
+          students = [];
+          subjects = [];
+
+          const messages = {
+            empty: "This spreadsheet is empty.",
+            columns: "Required columns not found. The sheet needs Roll No, SPI, and CPI columns.",
+            students: "No valid students were found in this sheet."
+          };
+
+          showError(messages[error.message] || "This file could not be processed.");
+        }
+
+        setLoading(false);
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    function showError(message) {
+      $("#output").innerHTML = `
+        <div class="error-card">
+          <div class="emoji">📄</div>
+          <strong>We could not analyze this sheet</strong>
+          <span>${escapeHTML(message)}</span>
+        </div>
+      `;
+      showMessage("");
+    }
+
+    function getStudentStats(key, student) {
+      const higher = students.filter(other => other[key] > student[key]).length;
+      const lower = students.filter(other => other[key] < student[key]).length;
+      const tied = students.filter(other =>
+        other !== student && other[key] === student[key]
+      ).length;
+
+      const average =
+        students.reduce((sum, other) => sum + other[key], 0) / students.length;
+
+      return {
+        higher,
+        lower,
+        tied,
+        rank: higher + 1,
+        average,
+        highest: Math.max(...students.map(other => other[key]))
+      };
+    }
+
+    function metricCard(title, value, stats) {
+      return `
+        <article class="metric">
+          <div class="metric-title">Your ${title}</div>
+          <div class="metric-value">${value.toFixed(2)}</div>
+          <div class="metric-info">
+            Rank <b>${stats.rank}</b> of ${students.length}<br>
+            ${stats.higher} students scored higher<br>
+            ${stats.lower} students scored lower<br>
+            Class average <b>${stats.average.toFixed(2)}</b>
+          </div>
+        </article>
+      `;
+    }
+
+    function subjectComparison(student, subject) {
+      const ownGrade = gradeValue(student.grades[subject]);
+
+      if (ownGrade === null) {
+        return null;
+      }
+
+      const validStudents = students.filter(other =>
+        gradeValue(other.grades[subject]) !== null
+      );
+
+      const higher = validStudents.filter(other =>
+        gradeValue(other.grades[subject]) > ownGrade
+      ).length;
+
+      const lower = validStudents.filter(other =>
+        gradeValue(other.grades[subject]) < ownGrade
+      ).length;
+
+      const total = higher + lower;
+      const higherWidth = total ? (higher / total) * 100 : 0;
+      const lowerWidth = total ? (lower / total) * 100 : 0;
+      const isLab = /lab/i.test(subject);
+
+      return {
+        name: subject.replace(/\s*\([^)]*\)\s*$/, ""),
+        grade: student.grades[subject],
+        higher,
+        lower,
+        higherWidth,
+        lowerWidth,
+        isLab
+      };
+    }
+
+    function subjectRow(subject) {
+      const valid = subjectComparison(currentStudent, subject);
+      if (!valid) return "";
+
+      return `
+        <details class="subject">
+          <summary>
+            <div class="subject-name">
+              ${escapeHTML(valid.name)}
+              <span class="subject-kind">
+                ${valid.isLab ? "Laboratory" : "Theory"}
+              </span>
+            </div>
+
+            <div class="comparison">
+              <div class="comparison-bar">
+                <i class="higher-bar" style="width:${valid.higherWidth}%"></i>
+                <i class="lower-bar" style="width:${valid.lowerWidth}%"></i>
+              </div>
+              <div class="comparison-counts">
+                <span><b>${valid.higher}</b> higher</span>
+                <span><b>${valid.lower}</b> lower</span>
+              </div>
+            </div>
+
+            <span class="grade">${escapeHTML(valid.grade)}</span>
+          </summary>
+
+          <div class="subject-detail">
+            <div class="detail-box">
+              <strong>Students scoring higher</strong>
+              <span>${valid.higher} students were excluded from the lower count.</span>
+            </div>
+            <div class="detail-box">
+              <strong>Students scoring lower</strong>
+              <span>${valid.lower} students were excluded from the higher count.</span>
+            </div>
+          </div>
+        </details>
+      `;
+    }
+
+    function subjectSection() {
+      const theory = subjects.filter(subject => !/lab/i.test(subject));
+      const labs = subjects.filter(subject => /lab/i.test(subject));
+
+      const renderGroup = (title, list) => {
+        const rows = list.map(subjectRow).join("");
+
+        if (!rows) return "";
+
+        return `
+          <div class="subject-group">
+            <div class="group-title">${title}</div>
+            ${rows}
+          </div>
+        `;
+      };
+
+      return `
+        <section class="section">
+          <div class="section-heading">
+            <div>
+              <h2>Subject comparison</h2>
+              <p>
+                Expand a subject to see how many valid students scored higher
+                or lower than you.
+              </p>
+            </div>
+          </div>
+
+          ${renderGroup("Theory", theory)}
+          ${renderGroup("Labs", labs)}
+        </section>
+      `;
+    }
+
+    let currentStudent = null;
+
+    function analyze() {
+      if (!students.length) {
+        showMessage("Choose an Excel sheet first.");
+        return;
+      }
+
+      const roll = $("#roll").value.trim();
+
+      if (!roll) {
+        showMessage("Enter your roll number.");
+        return;
+      }
+
+      currentStudent = students.find(student => student.roll === roll);
+
+      if (!currentStudent) {
+        showMessage(`Roll number ${roll} was not found in this sheet.`);
+        return;
+      }
+
+      const spiStats = getStudentStats("spi", currentStudent);
+      const cpiStats = getStudentStats("cpi", currentStudent);
+
+      $("#output").innerHTML = `
+        <section class="results">
+          <div class="intro">
+            <h2>Here is your class snapshot.</h2>
+            <p>
+              ${escapeHTML(currentStudent.name || "Student")},
+              roll number ${escapeHTML(currentStudent.roll)}.
+            </p>
+          </div>
+
+          <div class="metric-grid">
+            ${metricCard("SPI", currentStudent.spi, spiStats)}
+            ${metricCard("CPI", currentStudent.cpi, cpiStats)}
+          </div>
+
+          ${subjectSection()}
+        </section>
+      `;
+
+      $("#output").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    const drop = $("#drop");
+
+    $("#file").addEventListener("change", event => {
+      const file = event.target.files[0];
+      if (file) loadWorkbook(file);
+    });
+
+    drop.addEventListener("dragover", event => {
+      event.preventDefault();
+      drop.classList.add("active");
+    });
+
+    drop.addEventListener("dragleave", () => {
+      drop.classList.remove("active");
+    });
+
+    drop.addEventListener("drop", event => {
+      event.preventDefault();
+      drop.classList.remove("active");
+
+      const file = event.dataTransfer.files[0];
+      if (file) loadWorkbook(file);
+    });
+
+    drop.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        $("#file").click();
+      }
+    });
+
+    $("#analyze").addEventListener("click", analyze);
+
+    $("#roll").addEventListener("keydown", event => {
+      if (event.key === "Enter") analyze();
+    });
+  </script>
 </body>
 </html>
